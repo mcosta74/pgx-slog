@@ -2,18 +2,33 @@ package log
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v5/tracelog"
 	"golang.org/x/exp/slog"
 )
 
 type Logger struct {
-	l *slog.Logger
+	l        *slog.Logger
+	errorKey string
 }
 
-func NewLogger(l *slog.Logger) *Logger {
-	return &Logger{l: l}
+type Option func(*Logger)
+
+func WithErrorKey(errorKey string) Option {
+	return func(logger *Logger) {
+		logger.errorKey = errorKey
+	}
+}
+
+func NewLogger(l *slog.Logger, options ...Option) *Logger {
+	logger := &Logger{l: l, errorKey: "INVALID_PGX_LOG_LEVEL"}
+
+	for _, option := range options {
+		option(logger)
+	}
+
+	return logger
 }
 
 func (l *Logger) Log(ctx context.Context, level tracelog.LogLevel, msg string, data map[string]interface{}) {
@@ -23,17 +38,17 @@ func (l *Logger) Log(ctx context.Context, level tracelog.LogLevel, msg string, d
 	}
 
 	switch level {
-	case pgx.LogLevelTrace:
+	case tracelog.LogLevelTrace:
 		logger.Log(context.Background(), slog.LevelDebug-1, msg, "PGX_LOG_LEVEL", level)
-	case pgx.LogLevelDebug:
+	case tracelog.LogLevelDebug:
 		logger.Debug(msg)
-	case pgx.LogLevelInfo:
+	case tracelog.LogLevelInfo:
 		logger.Info(msg)
-	case pgx.LogLevelWarn:
+	case tracelog.LogLevelWarn:
 		logger.Warn(msg)
-	case pgx.LogLevelError:
+	case tracelog.LogLevelError:
 		logger.Error(msg)
 	default:
-		logger.Error(msg, "INVALID_PGX_LOG_LEVEL", level)
+		logger.Error(msg, slog.Any(l.errorKey, fmt.Errorf("invalid pgx log level: %d", level)))
 	}
 }
