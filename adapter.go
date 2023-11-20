@@ -17,23 +17,27 @@ func NewLogger(l *slog.Logger) *Logger {
 }
 
 func (l *Logger) Log(ctx context.Context, level tracelog.LogLevel, msg string, data map[string]interface{}) {
-	logger := l.l
+	attrs := make([]slog.Attr, 0, len(data))
 	for k, v := range data {
-		logger = logger.With(k, v)
+		attrs = append(attrs, slog.Any(k, v))
 	}
 
+	var lvl slog.Level
 	switch level {
 	case pgx.LogLevelTrace:
-		logger.Log(context.Background(), slog.LevelDebug-1, msg, "PGX_LOG_LEVEL", level)
+		lvl = slog.LevelDebug - 1
+		attrs = append(attrs, slog.Any("PGX_LOG_LEVEL", level))
 	case pgx.LogLevelDebug:
-		logger.Debug(msg)
+		lvl = slog.LevelDebug
 	case pgx.LogLevelInfo:
-		logger.Info(msg)
+		lvl = slog.LevelInfo
 	case pgx.LogLevelWarn:
-		logger.Warn(msg)
+		lvl = slog.LevelWarn
 	case pgx.LogLevelError:
-		logger.Error(msg)
+		lvl = slog.LevelError
 	default:
-		logger.Error(msg, "INVALID_PGX_LOG_LEVEL", level)
+		lvl = slog.LevelError
+		attrs = append(attrs, slog.Any("INVALID_PGX_LOG_LEVEL", level))
 	}
+	l.l.LogAttrs(context.Background(), lvl, msg, attrs...)
 }
