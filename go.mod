@@ -1,11 +1,10 @@
 module github.com/mcosta74/pgx-slog
 
-go 1.20
+go 1.21
 
 require (
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jackc/pgx/v5 v5.3.1
-	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 )
 
 require (
