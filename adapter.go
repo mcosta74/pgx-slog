@@ -39,5 +39,5 @@ func (l *Logger) Log(ctx context.Context, level tracelog.LogLevel, msg string, d
 		lvl = slog.LevelError
 		attrs = append(attrs, slog.Any("INVALID_PGX_LOG_LEVEL", level))
 	}
-	l.l.LogAttrs(context.Background(), lvl, msg, attrs...)
+	l.l.LogAttrs(ctx, lvl, msg, attrs...)
 }
