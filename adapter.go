@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v5/tracelog"
 )
 
@@ -24,16 +23,16 @@ func (l *Logger) Log(ctx context.Context, level tracelog.LogLevel, msg string, d
 
 	var lvl slog.Level
 	switch level {
-	case pgx.LogLevelTrace:
+	case tracelog.LogLevelTrace:
 		lvl = slog.LevelDebug - 1
 		attrs = append(attrs, slog.Any("PGX_LOG_LEVEL", level))
-	case pgx.LogLevelDebug:
+	case tracelog.LogLevelDebug:
 		lvl = slog.LevelDebug
-	case pgx.LogLevelInfo:
+	case tracelog.LogLevelInfo:
 		lvl = slog.LevelInfo
-	case pgx.LogLevelWarn:
+	case tracelog.LogLevelWarn:
 		lvl = slog.LevelWarn
-	case pgx.LogLevelError:
+	case tracelog.LogLevelError:
 		lvl = slog.LevelError
 	default:
 		lvl = slog.LevelError
