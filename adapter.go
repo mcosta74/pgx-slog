@@ -9,10 +9,28 @@ import (
 
 type Logger struct {
 	l *slog.Logger
+	invalidLevelKey string
 }
 
-func NewLogger(l *slog.Logger) *Logger {
-	return &Logger{l: l}
+type Option func(*Logger)
+
+func WithInvalidLevelKey(key string) Option {
+	return func(l *Logger) {
+		l.invalidLevelKey = key
+	}
+}
+
+func NewLogger(l *slog.Logger, options ...Option) *Logger {
+	logger := &Logger{
+		l: l,
+		invalidLevelKey: "INVALID_PGX_LOG_LEVEL",
+	}
+
+	for _, option := range options {
+		option(logger)
+	}
+
+	return logger
 }
 
 func (l *Logger) Log(ctx context.Context, level tracelog.LogLevel, msg string, data map[string]interface{}) {
@@ -36,7 +54,7 @@ func (l *Logger) Log(ctx context.Context, level tracelog.LogLevel, msg string, d
 		lvl = slog.LevelError
 	default:
 		lvl = slog.LevelError
-		attrs = append(attrs, slog.Any("INVALID_PGX_LOG_LEVEL", level))
+		attrs = append(attrs, slog.Any(l.invalidLevelKey, fmt.Errorf("invalid pgx log level: %v", level)))
 	}
 	l.l.LogAttrs(ctx, lvl, msg, attrs...)
 }
